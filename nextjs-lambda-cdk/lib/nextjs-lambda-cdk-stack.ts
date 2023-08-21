@@ -32,6 +32,7 @@ export class NextjsLambdaCdkStack extends Stack {
         PORT: '8080',
       },
       layers: [lambdaAdapterLayer],
+      memorySize: 256,
     });
 
     const api = new apiGateway.RestApi(this, 'api', {
