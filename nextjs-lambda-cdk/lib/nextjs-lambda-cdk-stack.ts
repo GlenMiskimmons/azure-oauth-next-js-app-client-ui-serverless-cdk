@@ -6,12 +6,23 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
 import { Construct } from 'constructs';
+import * as dotenv from 'dotenv';
 
 const path = require('node:path');
+
+dotenv.config();
 
 export class NextjsLambdaCdkStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
+
+    const {
+      AZURE_AD_CLIENT_ID,
+      AZURE_AD_CLIENT_SECRET,
+      AZURE_AD_TENANT_ID,
+      NEXTAUTH_SECRET,
+      NEXTAUTH_URL,
+    }: any = process.env;
 
     const lambdaAdapterLayer = lambda.LayerVersion.fromLayerVersionArn(
       this,
@@ -30,6 +41,11 @@ export class NextjsLambdaCdkStack extends Stack {
         AWS_LAMBDA_EXEC_WRAPPER: '/opt/bootstrap',
         RUST_LOG: 'info',
         PORT: '8080',
+        AZURE_AD_CLIENT_ID,
+        AZURE_AD_CLIENT_SECRET,
+        AZURE_AD_TENANT_ID,
+        NEXTAUTH_SECRET,
+        NEXTAUTH_URL,
       },
       layers: [lambdaAdapterLayer],
       memorySize: 256,
@@ -85,6 +101,9 @@ export class NextjsLambdaCdkStack extends Stack {
           viewerProtocolPolicy:
             cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
           cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
+          allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
+          originRequestPolicy:
+            cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
         },
         additionalBehaviors: {
           '_next/static/*': {
